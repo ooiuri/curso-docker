@@ -1,0 +1,151 @@
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <title>Cadastro Simples</title>
+        <link rel="stylesheet" href="./index.css">
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <div class="cardContainer">
+                <header>
+                    <h3>
+                        Olá <span id="usuario"> </span> ❤️
+                    </h3>
+                    <h1>Que nota você dá pro adm?</h3>
+                    <p>Gostariamos de fazer uma pesquisa para jogar no bixo com propriedade! 🥰</p>
+                </header>
+                <form >
+                    <div class="formContainer">
+                        <input type="hidden" name="id" />
+                        <div class="form-group col">
+                            <label for="name">Qual o seu nome?</label>
+                            <input type="text" name="name">
+                        </div>
+                        <div class="radioContainer">
+                            <input type="radio" id="nota1" name="nota" value="1"><label for="nota1">1</label>
+                            <input type="radio" id="nota2" name="nota" value="2"><label for="nota2">2</label>
+                            <input type="radio" id="nota3" name="nota" value="3"><label for="nota3">3</label>
+                            <input type="radio" id="nota4" name="nota" value="4"><label for="nota4">4</label>
+                            <input type="radio" id="nota5" name="nota" value="5"><label for="nota5">5</label>
+                            <input type="radio" id="nota6" name="nota" value="6"><label for="nota6">6</label>
+                            <input type="radio" id="nota7" name="nota" value="7"><label for="nota7">7</label>
+                            <input type="radio" id="nota8" name="nota" value="8"><label for="nota8">8</label>
+                            <input type="radio" id="nota9" name="nota" value="9"><label for="nota9">9</label>
+                            <input type="radio" id="nota10" name="nota"value="10"><label for="nota10">10</label>
+                        </div>
+                        <div class="textarea col">
+                            <label for="sugestao">Como podemos melhorar?</label>
+                            <input type="textarea" name="sugestao"></input>
+                        </div>
+
+                        <button type="submit" class="button success" save>ENVIAR</button>
+                    </div>
+
+                </form>
+                <footer>
+                    <button class="button" onclick="showTable()" save>DADOS</button>
+                </footer>
+                <div id="table" class="tableOverlay" style="display: none;">
+                    <div class="tableContainer">
+                        <h2>Mensagens anteriores</h2>
+                        <table class="table" id="clients">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Nota</th>
+                                    <th>Sugestão</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsRows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
+        <script>
+            function showTable(){
+                $('#table').show()
+            }
+
+            const API = 'http://localhost:3000'
+            
+            const createButton = (label, type) => {
+                return $('<button>').addClass(`button ${type}`).html(label)
+            }
+
+            const renderRows = clients => {
+                const rows = clients.map(client => {
+                    const updateButton = createButton('Atualizar', 'warning')
+                    const removeButton = createButton('Excluir', 'danger')
+                    removeButton.click(() => removeClient(client))
+                    updateButton.click(() => loadClient(client))
+                    
+                    $('#usuario').text(client.name)
+
+                    return $('<tr>')
+                        .append($('<td>').append(client.name))
+                        .append($('<td>').append(client.nota))
+                        .append($('<td>').append(client.sugestao))
+                        .append($('<td>').append(updateButton).append(removeButton))
+                })
+
+                $('#clientsRows').html(rows)
+            }
+
+            const loadClient = client => {
+                $('[name=id]').val(client._id)
+                $('[name=name]').val(client.name)
+                $(`[name=nota${client.nota}]`).checked(true)
+                $('[name=sugestao]').val(client.sugestao)
+            }
+
+            const removeClient = client => {
+                $.ajax({
+                    method: 'DELETE',
+                    url: `${API}/clients/${client._id}`,
+                    success: getClients
+                })
+            }
+
+            const getClients = () => {
+                $.ajax({
+                    url: `${API}/clients`,
+                    success: clients => {
+                        console.log(clients)
+                        renderRows(clients)
+                        $('[name=name]').val('')
+                    }
+                })
+            }
+
+            const saveClient = () => {
+                const _id = $('[name=id]').val();
+                const name = $('[name=name]').val();
+                console.log('name: ',name)
+                const nota = Number($('[name=nota]:checked').val());
+                const sugestao = $('[name=sugestao]').val();
+                
+                $.ajax({
+                    method: _id ? 'PUT' : 'POST',
+                    url: `${API}/clients/${_id}`,
+                    data: _id ? { _id, name, nota, sugestao } : { name, nota, sugestao },
+                    success: getClients
+                })
+            }
+
+            $(() => {
+                getClients()
+                $('[save]').click(saveClient)
+            })
+
+        </script>
+    
+    </body>
+</html>
